@@ -1,0 +1,162 @@
+﻿<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="modules/bootstrap/css/bootstrap.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="modules/tabulator/dist/css/tabulator.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="modules/tabulator/dist/css/bootstrap/tabulator_bootstrap4.min.css" crossorigin="anonymous">
+		
+		<title>Seamless | User</title>
+	</head>
+    <body>
+        <!-- Header Definition -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Navbar</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Test</a>
+                    </li>
+                    <!--<li class="nav-item">
+                    <a class="nav-link" href="#" id="context_Test" onclick="setContext(this.id);">Test</a>
+                </li>-->
+                </ul>
+            </div>
+        </nav>
+        <!-- End Definition -->
+        <!-- Main Definition -->
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col">
+                    <h1>Hello </h1><h1 id="username"></h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h2>Your personal information</h2>
+                    <pre id="info"></pre>
+                </div>
+                <div class="col">
+                    <h2>Refferal Code</h2>
+                    <div id="code"></div>
+                    <span>
+                        <a href="#" id="generate" onclick="generateNewCode()">Generate New Code</a>
+                    </span>
+                    <br />
+                    <span>
+                        Current point: <code id="pts"></code>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- End Definition -->
+        <!-- Footer Definition -->
+        <footer class="fixed-bottom p-3 mb-2 bg-light text-dark">
+            <p class="text-center">&copy; Copyright 2018</p>
+        </footer>
+        <!-- End Definition -->
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="modules/jquery/js/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+        <script src="modules/popper.js/js/popper.min.js" crossorigin="anonymous"></script>
+        <script src="modules/bootstrap/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="modules/tabulator/dist/js/tabulator.min.js" crossorigin="anonymous"></script>
+        <script src="modules/moment.js/js/moment-with-locales.js" crossorigin="anonymous"></script>
+        <script src="modules/qrcode.js/qrcode.min.js" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            function refreshCode(newCode) {
+                //document.getElementById('code').innerHTML = newCode;
+                qrcode.makeCode(newCode);
+            }
+
+            function objToString(obj) {
+                var str = '';
+                for (var p in obj) {
+                    if (obj.hasOwnProperty(p)) {
+                        str += p + '::' + obj[p] + '\n';
+                    }
+                }
+                return str;
+            }
+
+            var qrcode = new QRCode(document.getElementById("code"), {
+                width: 128,
+                height: 128,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            qrcode.clear();
+
+            var baseaddress = "../ref/api/";
+            var baseconfig = {
+                "async": false,
+                "url": baseaddress,
+                "method": 'GET',
+                "headers": {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                }
+            };
+            var referrer = null;
+            var person = null;
+            var refcode = null;
+
+            var setReferrer = function (value) {
+                referrer = value;
+            };
+
+            var setPerson = function (value) {
+                person = value;
+            };
+
+            var setRefCode = function (value) {
+                refcode = value;
+            };
+
+            function generateNewCode() {
+                qrcode.clear();
+                var meconfig = JSON.parse(JSON.stringify(baseconfig));
+                meconfig.method = 'POST';
+                meconfig.url += 'referralcodes';
+                meconfig.data = JSON.stringify({ Referrer: 1 });
+                console.log(meconfig);
+                $.ajax(meconfig).done(function (response) {
+                    refreshCode(response.Code);
+                });
+            }
+
+            // Load Referrer (1)
+            var rconfig = JSON.parse(JSON.stringify(baseconfig));
+            rconfig.url += "referrers/1";
+            $.ajax(rconfig).done(setReferrer);
+
+            // Load Person
+            var pconfig = JSON.parse(JSON.stringify(baseconfig));
+            pconfig.url += "persons/" + referrer.Person;
+            $.ajax(pconfig).done(setPerson);
+
+            // Load Referral Code
+            var fconfig = JSON.parse(JSON.stringify(baseconfig));
+            fconfig.url += "referralcode?valid=" + referrer.Id;
+            $.ajax(fconfig).done(setRefCode);
+
+            // Wrap all
+            document.getElementById('username').innerHTML = person.Name;
+            document.getElementById('info').innerHTML = objToString(person);
+            refreshCode(refcode.Code == undefined ? "" : refcode.Code);
+            document.getElementById('pts').innerHTML = referrer.Points;
+        </script>
+    </body>
+</html>

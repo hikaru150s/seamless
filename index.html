@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="modules/bootstrap/css/bootstrap.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="modules/tabulator/dist/css/tabulator.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="modules/tabulator/dist/css/bootstrap/tabulator_bootstrap4.min.css" crossorigin="anonymous">
+		
+		<title>Seamless</title>
+	</head>
+	<body>
+		<!-- Header Definition -->
+		<nav class="navbar navbar-expand-lg navbar-light bg-light">
+			<a class="navbar-brand" href="#">Navbar</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_Bank" onclick="setContext(this.id);">Bank</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_Person" onclick="setContext(this.id);">Person</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_ReferralCode" onclick="setContext(this.id);">Referral Code</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_ReferralTransaction" onclick="setContext(this.id);">Referral Transaction</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_ReferralBankAccount" onclick="setContext(this.id);">Referral Bank Account</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_ReferralBankTransaction" onclick="setContext(this.id);">Referral Bank Transaction</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#" id="context_Referrer" onclick="setContext(this.id);">Referrer</a>
+					</li>
+					<!--<li class="nav-item">
+						<a class="nav-link" href="#" id="context_Test" onclick="setContext(this.id);">Test</a>
+					</li>-->
+				</ul>
+			</div>
+		</nav>
+		<!-- End Definition -->
+		
+		<!-- Main Definition -->
+		<div class="alert alert-danger alert-dismissible fade hide text-center fixed-top" role="alert" style="top: 25%; margin-left: 15%; margin-right: 15%;">
+			<strong>Cannot edit!</strong> See console!
+			<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+		<div class="container-fluid">
+			<div id="main-table" class="thead-dark"></div>
+		</div>
+		<!-- End Definition -->
+		
+		<!-- Footer Definition -->
+		<footer class="fixed-bottom p-3 mb-2 bg-light text-dark">
+			<p class="text-center">&copy; Copyright 2018</p>
+		</footer>
+		<!-- End Definition -->
+		
+		<!-- Optional JavaScript -->
+		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+		<script src="modules/jquery/js/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+		<script src="modules/popper.js/js/popper.min.js" crossorigin="anonymous"></script>
+		<script src="modules/bootstrap/js/bootstrap.min.js" crossorigin="anonymous"></script>
+		<script src="modules/tabulator/dist/js/tabulator.min.js" crossorigin="anonymous"></script>
+		<script src="modules/moment.js/js/moment-with-locales.js" crossorigin="anonymous"></script>
+		<script type="text/javascript">
+			var ctx = "";
+			var baseaddress = "../ref/api/";
+			var relativeaddress = "";
+			
+			var dataEdit = function(cell) {
+				console.log(cell);
+				var data = cell._cell.row.data;
+				var id = data.id;
+				var prep = JSON.stringify(data);
+				console.log(prep);
+				console.log(baseaddress + relativeaddress + "/" + id);
+				$.ajax({
+					"async": true,
+					"url":baseaddress + relativeaddress + "/" + id,
+					"method":'PUT',
+					"headers": {
+						"Accept": "application/json",
+						"Content-Type": "application/json",
+					},
+					"data": prep,
+					"error": function(xhr, status, error) {
+						cell._cell.value = cell._cell.oldValue;
+						console.log({xhr: xhr, status: status, error: error});
+						$('.alert').alert();
+					},
+					"success": function(result, status, xhr) {
+						console.log({xhr: xhr, status: status, result: result});
+					}
+				});
+			};
+		
+			var table = new Tabulator(
+				"#main-table",
+				{
+					height:"80vh",
+					layout:"fitColumns",
+					responsiveLayout: true,
+					placeholder:"Select Menu",
+					pagination:"local",
+					paginationSize:25,
+					cellEdited:dataEdit,
+					selectable:true
+				}
+			);
+			
+			function setContext(context) {
+				ctx = context;
+				switch (ctx) {
+					case "context_Bank":
+						relativeaddress = "banks";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Bank Code",
+								field:"Code",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "unique", "numeric"]
+							},
+							{
+								title:"Bank Name",
+								field:"Name",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							}
+						]);
+						break;
+					case "context_Person":
+						relativeaddress = "persons";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Identity Number",
+								field:"IdentityNumber",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "unique", "numeric"]
+							},
+							{
+								title:"Name",
+								field:"Name",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Place of Birth",
+								field:"POB",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Date of Birth",
+								field:"DOB",
+								visible:true,
+								sorter:"date",
+								sorterParams:{format:"YYYY-MM-DD"},
+								formatter:"date",
+								formatterParams:{inputFormat:"YYYY-MM-DD", outputFormat:"YYYY-MM-DD"},
+								editor:"input",
+								validator:["required"]
+							},
+							{
+								title:"Gender",
+								field:"Gender",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"select",
+								editorParams:{"MALE":"Male", "FEMALE":"female"},
+								validator:["required", "string"]
+							},
+							{
+								title:"Blood Type",
+								field:"BloodType",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"select",
+								editorParams:{"A":"A", "B":"B", "AB":"AB", "0":"0"},
+								validator:["required"]
+							},
+							{
+								title:"Address",
+								field:"Address",
+								visible:true,
+								sorter:"string",
+								formatter:"textare",
+								editor:"textarea",
+								validator:["required"]
+							},
+							{
+								title:"Religion",
+								field:"Religion",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"select",
+								editorParams:{'ISLAM':'Islam', 'PROTESTANT':'Protestant', 'CATHOLIC':'Catholic', 'HINDUISM':'Hinduism', 'BUDDHISM':'Buddhism', 'CONFUCIANISM':'Confucianism', 'OTHER':'Other'},
+								validator:["required", "string"]
+							},
+							{
+								title:"Martial Status",
+								field:"Martial",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Job",
+								field:"Job",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Citizenship Status",
+								field:"Citizenship",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"select",
+								editorParams:{'WNI':'Native Indonesia', 'WNA':'Incomers'},
+								validator:["required", "string"]
+							}
+						]);
+						break;
+					case "context_ReferralCode":
+						relativeaddress = "referralcode";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Referrer ID",
+								field:"Referrer",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Referral Code",
+								field:"Code",
+								visible:true,
+								sorter:"alphanum",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Short Version Code",
+								field:"ShortCode",
+								visible:true,
+								sorter:"alphanum",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Last Changed",
+								field:"LastChanged",
+								visible:true,
+								sorter:"datetime",
+								sorterParams:{format:"YYYY-MM-DD hh:mm:ss"},
+								formatter:"datetime",
+								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"}
+							}
+						]);
+						break;
+					case "context_ReferralTransaction":
+						relativeaddress = "referraltransactions";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Referrer ID",
+								field:"Referrer",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Referral Code",
+								field:"Code",
+								visible:true,
+								sorter:"alphanum",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "string"]
+							},
+							{
+								title:"Transaction Time",
+								field:"TransactionTime",
+								visible:true,
+								sorter:"datetime",
+								sorterParams:{format:"YYYY-MM-DD hh:mm:ss"},
+								formatter:"datetime",
+								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
+							},
+							{
+								title:"Collected Points",
+								field:"Points",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "numeric"]
+							}
+						]);
+						break;
+					case "context_ReferralBankAccount":
+						relativeaddress = "referrerbankaccounts";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Referrer ID",
+								field:"Referrer",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Bank Code",
+								field:"Code",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "unique", "numeric"]
+							},
+							{
+								title:"Bank Account Number",
+								field:"BankAccountNumber",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Last Changed",
+								field:"LastChanged",
+								visible:true,
+								sorter:"datetime",
+								sorterParams:{format:"YYYY-MM-DD hh:mm:ss"},
+								formatter:"datetime",
+								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
+							}
+						]);
+						break;
+					case "context_ReferralBankTransaction":
+						relativeaddress = "referrerbanktransactions";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Referrer ID",
+								field:"Referrer",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Bank Account ID",
+								field:"BankAccount",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Redeemed Points",
+								field:"Points",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Transaction Time",
+								field:"TransactionTime",
+								visible:true,
+								sorter:"datetime",
+								sorterParams:{format:"YYYY-MM-DD hh:mm:ss"},
+								formatter:"datetime",
+								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
+							},
+						]);
+						break;
+					case "context_Referrer":
+						relativeaddress = "referrers";
+						table.setColumns([
+							{
+								title:"System ID",
+								field:"Id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Person ID",
+								field:"Person",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"number",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Available Points",
+								field:"Points",
+								visible:true,
+								sorter:"number",
+								formatter:"plaintext",
+								editor:"input",
+								validator:["required", "numeric"]
+							},
+							{
+								title:"Active Referrer?",
+								field:"Active",
+								visible:true,
+								sorter:"boolean",
+								formatter:"tickCross",
+								editor:"tick",
+								validator:["required"]
+							},
+							{
+								title:"Last Changed",
+								field:"LastChanged",
+								visible:true,
+								sorter:"datetime",
+								sorterParams:{format:"YYYY-MM-DD hh:mm:ss"},
+								formatter:"datetime",
+								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
+							}
+						]);
+						break;
+					default:
+						baseaddress = "../test/api/articles";
+						table.setColumns([
+							{
+								title:"ID",
+								field:"id",
+								visible:false,
+								sorter:"number"
+							},
+							{
+								title:"Article Title",
+								field:"title",
+								visible:true,
+								sorter:"string",
+								formatter:"plaintext",
+								editor:"input",
+								validator:"required"
+							},
+							{
+								title:"Article Content",
+								field:"body",
+								visible:true,
+								formatter:"textarea",
+								editor:"textarea",
+								validator:"required"
+							},
+							{
+								title:"Created At",
+								field:"created_at",
+								visible:true,
+								formatter:"datetime",
+								sorter:"datetime",
+								formatterParams:{
+									inputFormat:"YYYY-MM-DD hh:mm:ss",
+									outputFormat:"YYYY-MM-DD hh:mm:ss"
+								},
+								sorterParams:{
+									format:"YYYY-MM-DD hh:mm:ss"
+								}
+							},
+							{
+								title:"Updated At",
+								field:"updated_at",
+								visible:true,
+								formatter:"datetime",
+								sorter:"datetime",
+								formatterParams:{
+									inputFormat:"YYYY-MM-DD hh:mm:ss",
+									outputFormat:"YYYY-MM-DD hh:mm:ss"
+								},
+								sorterParams:{
+									format:"YYYY-MM-DD hh:mm:ss"
+								}
+							}
+						]);
+				}
+				
+				table.setData(baseaddress + relativeaddress, {}, {
+					method:"GET",
+					headers: {
+						"Accept": "application/json",
+						"Content-Type": "application/json"
+					}
+				});
+			}
+		</script>
+	</body>
+</html>
