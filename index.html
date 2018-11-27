@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 	<head>
 		<!-- Required meta tags -->
@@ -38,7 +38,7 @@
 						<a class="nav-link" href="#" id="context_ReferralTransaction" onclick="setContext(this.id);">Referral Transaction</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="#" id="context_ReferralBankAccount" onclick="setContext(this.id);">Referral Bank Account</a>
+						<a class="nav-link" href="#" id="context_ReferrerBankAccount" onclick="setContext(this.id);">Referrer Bank Account</a>
 					</li>
 					<li class="nav-item">
 						<a class="nav-link" href="#" id="context_ReferralBankTransaction" onclick="setContext(this.id);">Referral Bank Transaction</a>
@@ -62,6 +62,10 @@
 			</button>
 		</div>
 		<div class="container-fluid">
+            <span id="tabulator-controls" class="table-controls">
+                <button id="table-add" name="add-row" disabled="disabled">Add new record</button>
+                <button id="table-del" name="del-row" disabled="disabled">Delete selected record</button>
+            </span>
 			<div id="main-table" class="thead-dark"></div>
 		</div>
 		<!-- End Definition -->
@@ -82,7 +86,9 @@
 		<script type="text/javascript">
 			var ctx = "";
 			var baseaddress = "../referral-system/api/";
-			var relativeaddress = "";
+            var relativeaddress = "";
+            var addButton = document.getElementById("table-add");
+            var delButton = document.getElementById("table-del");
 			
 			var dataEdit = function(cell) {
 				console.log(cell);
@@ -110,6 +116,71 @@
 					}
 				});
 			};
+			
+			function addData() {
+				var ndata = "";
+				switch (ctx) {
+					case "context_Bank":
+						var h = {
+							Code: Math.floor((Math.random() * 1000) + 1000),
+							Name: "New Bank"
+						};
+                        ndata = JSON.stringify(h);
+						break;
+                    case "context_Person":
+                        var h = {
+                            IdentityNumber: Math.floor((Math.random() * 1000000) + 10000000),
+                            Name: "New Person",
+                            POB: "New City",
+                            DOB: "1990-01-01",
+                            Gender: "MALE",
+                            BloodType: "A",
+                            Address: "New Address",
+                            Religion: "ISLAM",
+                            Martial: "No",
+                            Job: "No",
+                            Citizenship: "WNI"
+                        };
+                        ndata = JSON.stringify(h);
+						break;
+                    case "context_ReferrerBankAccount":
+                        var h = {
+                            Referrer: 1,
+                            BankCode: 673,
+                            BankAccountNumber: 0
+                        };
+                        ndata = JSON.stringify(h);
+						break;
+                    case "context_Referrer":
+                        var h = {
+                            Person: 1,
+                            Points: 0,
+                            Active: 0
+                        };
+                        ndata = JSON.stringify(h);
+						break;
+                }
+                if (ndata != "") {
+                    $.ajax({
+                        "async": true,
+                        "url": baseaddress + relativeaddress,
+                        "method": 'POST',
+                        "headers": {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                        },
+                        "data": ndata,
+                        "error": function (xhr, status, error) {
+                            console.log({ xhr: xhr, status: status, error: error });
+                            $('.alert').alert();
+                        },
+                        "success": function (result, status, xhr) {
+                            console.log({ xhr: xhr, status: status, result: result });
+                            table.addRow(result, true);
+                        }
+                    });
+                }
+			};
 		
 			var table = new Tabulator(
 				"#main-table",
@@ -121,7 +192,8 @@
 					pagination:"local",
 					paginationSize:25,
 					cellEdited:dataEdit,
-					selectable:true
+                    selectable: true,
+                    selectableRangeMode: "click"
 				}
 			);
 			
@@ -155,7 +227,11 @@
 								editor:"input",
 								validator:["required", "string"]
 							}
-						]);
+                        ]);
+                        if (addButton.hasAttribute("disabled")) {
+                            addButton.removeAttribute("disabled");
+                            delButton.removeAttribute("disabled");
+                        }
 						break;
 					case "context_Person":
 						relativeaddress = "persons";
@@ -271,7 +347,11 @@
 								editorParams:{'WNI':'Native Indonesia', 'WNA':'Incomers'},
 								validator:["required", "string"]
 							}
-						]);
+                        ]);
+                        if (addButton.hasAttribute("disabled")) {
+                            addButton.removeAttribute("disabled");
+                            delButton.removeAttribute("disabled");
+                        }
 						break;
 					case "context_ReferralCode":
 						relativeaddress = "referralcode";
@@ -318,7 +398,11 @@
 								formatter:"datetime",
 								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"}
 							}
-						]);
+                        ]);
+                        if (!addButton.hasAttribute("disabled")) {
+                            addButton.setAttribute("disabled", "disabled");
+                            delButton.setAttribute("disabled", "disabled");
+                        }
 						break;
 					case "context_ReferralTransaction":
 						relativeaddress = "referraltransactions";
@@ -365,9 +449,13 @@
 								editor:"input",
 								validator:["required", "numeric"]
 							}
-						]);
+                        ]);
+                        if (!addButton.hasAttribute("disabled")) {
+                            addButton.setAttribute("disabled", "disabled");
+                            delButton.setAttribute("disabled", "disabled");
+                        }
 						break;
-					case "context_ReferralBankAccount":
+                    case "context_ReferrerBankAccount":
 						relativeaddress = "referrerbankaccounts";
 						table.setColumns([
 							{
@@ -412,7 +500,11 @@
 								formatter:"datetime",
 								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
 							}
-						]);
+                        ]);
+                        if (addButton.hasAttribute("disabled")) {
+                            addButton.removeAttribute("disabled");
+                            delButton.removeAttribute("disabled");
+                        }
 						break;
 					case "context_ReferralBankTransaction":
 						relativeaddress = "referrerbanktransactions";
@@ -459,7 +551,11 @@
 								formatter:"datetime",
 								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
 							},
-						]);
+                        ]);
+                        if (!addButton.hasAttribute("disabled")) {
+                            addButton.setAttribute("disabled", "disabled");
+                            delButton.setAttribute("disabled", "disabled");
+                        }
 						break;
 					case "context_Referrer":
 						relativeaddress = "referrers";
@@ -506,63 +602,12 @@
 								formatter:"datetime",
 								formatterParams:{inputFormat:"YYYY-MM-DD hh:mm:ss", outputFormat:"YYYY-MM-DD hh:mm:ss"},
 							}
-						]);
+                        ]);
+                        if (addButton.hasAttribute("disabled")) {
+                            addButton.removeAttribute("disabled");
+                            delButton.removeAttribute("disabled");
+                        }
 						break;
-					default:
-						baseaddress = "../test/api/articles";
-						table.setColumns([
-							{
-								title:"ID",
-								field:"id",
-								visible:false,
-								sorter:"number"
-							},
-							{
-								title:"Article Title",
-								field:"title",
-								visible:true,
-								sorter:"string",
-								formatter:"plaintext",
-								editor:"input",
-								validator:"required"
-							},
-							{
-								title:"Article Content",
-								field:"body",
-								visible:true,
-								formatter:"textarea",
-								editor:"textarea",
-								validator:"required"
-							},
-							{
-								title:"Created At",
-								field:"created_at",
-								visible:true,
-								formatter:"datetime",
-								sorter:"datetime",
-								formatterParams:{
-									inputFormat:"YYYY-MM-DD hh:mm:ss",
-									outputFormat:"YYYY-MM-DD hh:mm:ss"
-								},
-								sorterParams:{
-									format:"YYYY-MM-DD hh:mm:ss"
-								}
-							},
-							{
-								title:"Updated At",
-								field:"updated_at",
-								visible:true,
-								formatter:"datetime",
-								sorter:"datetime",
-								formatterParams:{
-									inputFormat:"YYYY-MM-DD hh:mm:ss",
-									outputFormat:"YYYY-MM-DD hh:mm:ss"
-								},
-								sorterParams:{
-									format:"YYYY-MM-DD hh:mm:ss"
-								}
-							}
-						]);
 				}
 				
 				table.setData(baseaddress + relativeaddress, {}, {
@@ -572,7 +617,35 @@
 						"Content-Type": "application/json"
 					}
 				});
-			}
+            }
+
+            $("#table-add").on("click", function () {
+                console.log("Clicked Add");
+                addData();
+            });
+
+            $("#table-del").on("click", function () {
+                var selectedRows = table.getSelectedRows();
+                for (var i = 0; i < selectedRows.length; i++) {
+                    $.ajax({
+                        "async": true,
+                        "url": baseaddress + relativeaddress + "/" + selectedRows[i]._row.data.Id,
+                        "method": 'DELETE',
+                        "headers": {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                        },
+                        "error": function (xhr, status, error) {
+                            console.log({ xhr: xhr, status: status, error: error });
+                            //$('.alert').alert();
+                        },
+                        "success": function (result, status, xhr) {
+                            console.log({ xhr: xhr, status: status, result: result });
+                            table.deleteRow(selectedRows[i - 1]._row);
+                        }
+                    });
+                }
+            });
 		</script>
 	</body>
 </html>
