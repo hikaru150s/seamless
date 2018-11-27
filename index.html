@@ -626,25 +626,29 @@
 
             $("#table-del").on("click", function () {
                 var selectedRows = table.getSelectedRows();
-                for (var i = 0; i < selectedRows.length; i++) {
-                    $.ajax({
-                        "async": true,
-                        "url": baseaddress + relativeaddress + "/" + selectedRows[i]._row.data.Id,
-                        "method": 'DELETE',
-                        "headers": {
-                            "Accept": "application/json",
-                            "Content-Type": "application/json",
-                        },
-                        "error": function (xhr, status, error) {
-                            console.log({ xhr: xhr, status: status, error: error });
-                            //$('.alert').alert();
-                        },
-                        "success": function (result, status, xhr) {
-                            console.log({ xhr: xhr, status: status, result: result });
-                            table.deleteRow(selectedRows[i - 1]._row);
-                        }
-                    });
-                }
+				if (selectedRows.length > 0 ) {
+					for (var i = 0; i < selectedRows.length; i++) {
+						$.ajax({
+						"async": true,
+						"url": baseaddress + relativeaddress + "/" + selectedRows[i]._row.data.Id,
+						"method": 'DELETE',
+						"headers": {
+							"Accept": "application/json",
+							"Content-Type": "application/json",
+						},
+						"error": function (xhr, status, error) {
+							console.log({ xhr: xhr, status: status, error: error });
+							//$('.alert').alert();
+						},
+						"success": function (result, status, xhr) {
+							console.log({ xhr: xhr, status: status, result: result });
+							table.deleteRow(selectedRows[i - 1]._row);
+						}
+						});
+					}
+				} else {
+					alert('No row selected!');
+				}
             });
 		</script>
 	</body>
